@@ -3,7 +3,7 @@
 # @Date    : 2018-03-30 20:53:54
 # -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-from homeapp import create_app
+from facedete import create_app
 from flask_script import Manager, Shell, Server
 
 app = create_app('default')

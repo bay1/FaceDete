@@ -1,7 +1,7 @@
 $(document).ready(function () {
     var video = document.getElementById('video'),
         canvas = document.getElementById('canvas'),
-        loginButton = document.getElementById('loginButton'),
+        signButton = document.getElementById('signButton'),
         vendorUrl = window.URL || window.webkitURL;
     //媒体对象
     // 老的浏览器可能根本没有实现 mediaDevices，所以我们可以先设置一个空的对象
@@ -45,7 +45,7 @@ $(document).ready(function () {
         .catch(function (err) {
             console.log(err.name + ": " + err.message);
         });
-    loginButton.addEventListener('click', function () {
+    signButton.addEventListener('click', function () {
 
         //绘制canvas图形
         canvas.getContext('2d').drawImage(video, 0, 0, 400, 300);
@@ -57,7 +57,7 @@ $(document).ready(function () {
         $.ajax(
             {
                 type: 'POST',
-                url: '../checkLogin',
+                url: '../checkSign',
                 data: JSON.stringify(data),
                 dataType: "json",
                 complete: function(res){
@@ -71,5 +71,4 @@ $(document).ready(function () {
             }
         )
     });
-    // $("#loginUrl").attr("href", base_url + "/api/yiban/login");
 })

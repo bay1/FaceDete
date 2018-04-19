@@ -21,7 +21,7 @@ html {
 
 body {
     font-family: "Microsoft Yahei";
-    background: url(/static/images/login.jpg) no-repeat 50%;
+    background: url(/static/images/sign.jpg) no-repeat 50%;
     background-size: cover;
     padding: 50px;
 }
@@ -87,6 +87,6 @@ body {
     left: 100%;
 }
 
-#loginButton {
+#signButton {
     width: 200px;
 }

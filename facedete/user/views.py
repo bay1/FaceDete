@@ -9,9 +9,9 @@ from aip import AipFace
 from flask import current_app, request, jsonify
 
 
-@user.route('/login', methods=['GET'])
-def login():
-    return current_app.send_static_file('login.html')
+@user.route('/sign', methods=['GET'])
+def sign():
+    return current_app.send_static_file('sign.html')
 
 
 @user.route('/reg', methods=['GET'])
@@ -19,8 +19,8 @@ def reg():
     return current_app.send_static_file('reg.html')
 
 
-@user.route('/checkLogin', methods=['POST'])
-def checkLogin():
+@user.route('/checkSign', methods=['POST'])
+def checkSign():
     data = request.get_json(force=True)
     image = data['img']
     if image:
