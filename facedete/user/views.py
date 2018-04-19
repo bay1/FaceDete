@@ -3,9 +3,11 @@
 # @Date    : 2018-03-30 20:53:54
 
 import re
+import socket
 import base64
 from . import user
-from aip import AipFace
+from ..extensions import db
+from ..models import User, Signlog
 from flask import current_app, request, jsonify
 
 
@@ -24,8 +26,7 @@ def checkSign():
     data = request.get_json(force=True)
     image = data['img']
     if image:
-        client = AipFace(current_app.config['APP_ID'],
-                         current_app.config['API_KEY'], current_app.config['SECRET_KEY'])
+        client = current_app.config['CLIENT']
         image = base64.b64decode(image.split(',')[-1])
         groupId = current_app.config['GROUP_ID']
         options = current_app.config['FYOPTIONS']
@@ -34,9 +35,19 @@ def checkSign():
             return jsonify({"status": False, 'msg': "请检查是否对准了摄像头"})
         scores = result['result'][0]['scores'][0]
         if scores > 80:
-            return jsonify({"status": True, 'msg': "签到成功~"})
+            pcname = socket.getfqdn(socket.gethostname(  ))
+            ip = socket.gethostbyname(pcname)
+            uid = result['result'][0]['uid']
+            user = User.query.filter_by(student_num=uid).first()
+            add_log = Signlog(
+                ip =ip,
+                pc_name = pcname
+            )
+            add_log.user_student_num=user.id
+            db.session.add(add_log)
+            return jsonify({"status": True, 'msg': user.name+"\n您在\n电脑:"+pcname+"上\n签到成功了~"})
         else:
-            return jsonify({"status": False, 'msg': "你好像照丑了哦~再拍一张吧！"})
+            return jsonify({"status": False, 'msg': "服务出错了！！"})
     else:
         return jsonify({"status": False, 'msg': "请求失败"})
 
@@ -54,10 +65,12 @@ def checkReg():
                 return jsonify({"status": False, 'msg': "你想干嘛~"})
             else:
                 result_id = str(check_id)
+                check_stu_num = User.query.filter_by(student_num=result_id).first()
+                if not check_stu_num:
+                    return jsonify({"status": False, 'msg': "您不是工作室成员哦~"})
         except:
             return jsonify({"status": False, 'msg': "请检查学号"})
-        client = AipFace(current_app.config['APP_ID'],
-                         current_app.config['API_KEY'], current_app.config['SECRET_KEY'])
+        client = current_app.config['CLIENT']
         image = base64.b64decode(image.split(',')[-1])
         det_options = current_app.config['DETOPTIONS']
         check_image = client.detect(image, det_options)
@@ -70,6 +83,10 @@ def checkReg():
                                 groupId, image, add_options)
         if 'error_code' in result:
             return jsonify({"status": False, 'msg': "请检查是否对准了摄像头"})
-        return jsonify({"status": True, 'msg': "注册成功"})
+        check_stu_num.log_id=result['log_id']
+        if check_stu_num.log_id:
+            return jsonify({"status": True, 'msg': "人脸更新成功"})
+        else:
+            return jsonify({"status": True, 'msg': "注册成功"})
     else:
         return jsonify({"status": False, 'msg': "请检查输入"})

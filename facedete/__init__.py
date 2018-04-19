@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Date    : 2018-03-30 20:53:54
 
+from . import extensions
 from flask import Flask, current_app
 from .config import config
 
@@ -18,9 +19,12 @@ def create_app(config_name='default'):
     config[config_name].init_app(app)
 
     register_blueprints(app)
+    register_extensions(app)
 
     return app
 
+def register_extensions(app):
+    extensions.db.init_app(app)
 
 def register_blueprints(app):
     # 注册蓝图
