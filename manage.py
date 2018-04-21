@@ -15,7 +15,7 @@ manager = Manager(app)
 
 @manager.command
 def readexcel():
-    workbook = xlrd.open_workbook(r'./users.xlsx')
+    workbook = xlrd.open_workbook(app.config['SIGN_LOGS_CONTENS']+r'./users.xlsx')
     sheet1 = workbook.sheet_by_index(0)
     cols = sheet1.col_values(0)
     for i in range(1, sheet1.nrows):

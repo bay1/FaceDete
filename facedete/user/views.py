@@ -3,12 +3,12 @@
 # @Date    : 2018-03-30 20:53:54
 
 import re
-import socket
 import base64
+import xlwt
 from . import user
 from ..extensions import db
 from ..models import User, Signlog
-from flask import current_app, request, jsonify
+from flask import current_app, request, jsonify, send_from_directory
 
 
 @user.route('/sign', methods=['GET'])
@@ -35,17 +35,14 @@ def checkSign():
             return jsonify({"status": False, 'msg': "请检查是否对准了摄像头"})
         scores = result['result'][0]['scores'][0]
         if scores > 80:
-            pcname = socket.getfqdn(socket.gethostname(  ))
-            ip = socket.gethostbyname(pcname)
             uid = result['result'][0]['uid']
             user = User.query.filter_by(student_num=uid).first()
-            add_log = Signlog(
-                ip =ip,
-                pc_name = pcname
-            )
-            add_log.user_student_num=user.id
-            db.session.add(add_log)
-            return jsonify({"status": True, 'msg': user.name+"\n您在\n电脑:"+pcname+"上\n签到成功了~"})
+            # add_log = Signlog(
+            #     ip =request.headers['X-Real-Ip']
+            # )
+            # add_log.user_stud ent_num=user.id
+            # db.session.add(add_log)
+            return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~"})
         else:
             return jsonify({"status": False, 'msg': "服务出错了！！"})
     else:
@@ -65,7 +62,8 @@ def checkReg():
                 return jsonify({"status": False, 'msg': "你想干嘛~"})
             else:
                 result_id = str(check_id)
-                check_stu_num = User.query.filter_by(student_num=result_id).first()
+                check_stu_num = User.query.filter_by(
+                    student_num=result_id).first()
                 if not check_stu_num:
                     return jsonify({"status": False, 'msg': "您不是工作室成员哦~"})
         except:
@@ -83,10 +81,30 @@ def checkReg():
                                 groupId, image, add_options)
         if 'error_code' in result:
             return jsonify({"status": False, 'msg': "请检查是否对准了摄像头"})
-        check_stu_num.log_id=result['log_id']
+        check_stu_num.log_id = result['log_id']
         if check_stu_num.log_id:
             return jsonify({"status": True, 'msg': "人脸更新成功"})
         else:
             return jsonify({"status": True, 'msg': "注册成功"})
     else:
         return jsonify({"status": False, 'msg': "请检查输入"})
+
+
+@user.route('/download', methods=['GET'])
+def download():
+    users = User.query.all()
+    row = 0
+    data = xlwt.Workbook(encoding = 'utf-8')
+    table = data.add_sheet('signlogs')
+    for user in users:
+        if user.signlogs:
+            for user_signlog in user.signlogs:
+                column = 0
+                table.write(row, column, user.student_num)
+                table.write(row, column+1, user.name)
+                table.write(row, column+2, user.group)
+                table.write(row, column+3, user_signlog.ip)
+                table.write(row, column+4, user_signlog.signtime.strftime("%Y-%m-%d %H:%M:%S"))
+                row += 1
+    data.save(current_app.config['SIGN_LOGS_CONTENS']+r'./result.xls')
+    return send_from_directory(current_app.config['SIGN_LOGS_CONTENS'], 'result.xls')

@@ -21,7 +21,6 @@ class Signlog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_student_num = db.Column(db.Integer, db.ForeignKey('user.id'))
     ip = db.Column(db.String(20))
-    pc_name = db.Column(db.String(20))
     signtime = db.Column(db.DateTime, default=datetime.now)
 
     def __repr__(self):
