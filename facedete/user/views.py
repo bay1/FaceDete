@@ -7,6 +7,7 @@ import base64
 import xlwt
 from . import user
 from ..extensions import db
+from datetime import datetime, timedelta
 from ..models import User, Signlog
 from flask import current_app, request, jsonify, send_from_directory
 
@@ -37,11 +38,16 @@ def checkSign():
         if scores > 80:
             uid = result['result'][0]['uid']
             user = User.query.filter_by(student_num=uid).first()
-            # add_log = Signlog(
-            #     ip =request.headers['X-Real-Ip']
-            # )
-            # add_log.user_stud ent_num=user.id
-            # db.session.add(add_log)
+            if not user:
+                return jsonify({"status": False, 'msg': "未找到您的信息！！"})
+            now_time = datetime.now()
+            if user.signlogs and now_time-user.signlogs[-1].signtime < timedelta(hours=1):
+                return jsonify({"status": False, 'msg': "您签到太频繁了!!\n至少间隔一小时才能签到一次哦~"})
+            add_log = Signlog(
+                ip=request.headers['X-Real-Ip']
+            )
+            add_log.user_student_num = user.id
+            db.session.add(add_log)
             return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~"})
         else:
             return jsonify({"status": False, 'msg': "服务出错了！！"})
@@ -93,9 +99,18 @@ def checkReg():
 @user.route('/download', methods=['GET'])
 def download():
     users = User.query.all()
-    row = 0
-    data = xlwt.Workbook(encoding = 'utf-8')
+    row = 1
+    data = xlwt.Workbook(encoding='utf-8')
     table = data.add_sheet('signlogs')
+    third_col = table.col(3)
+    fourth_col = table.col(4)
+    third_col.width = 256*20
+    fourth_col.width = 256*20
+    table.write(0, 0, u'学号')
+    table.write(0, 1, u'姓名')
+    table.write(0, 2, u'组别')
+    table.write(0, 3, '签到IP')
+    table.write(0, 4, u'签到时间')
     for user in users:
         if user.signlogs:
             for user_signlog in user.signlogs:
@@ -104,7 +119,8 @@ def download():
                 table.write(row, column+1, user.name)
                 table.write(row, column+2, user.group)
                 table.write(row, column+3, user_signlog.ip)
-                table.write(row, column+4, user_signlog.signtime.strftime("%Y-%m-%d %H:%M:%S"))
+                table.write(
+                    row, column+4, user_signlog.signtime.strftime("%Y-%m-%d %H:%M:%S"))
                 row += 1
-    data.save(current_app.config['SIGN_LOGS_CONTENS']+r'./result.xls')
+    data.save(current_app.config['SIGN_LOGS_CONTENS']+r'/result.xls')
     return send_from_directory(current_app.config['SIGN_LOGS_CONTENS'], 'result.xls')
