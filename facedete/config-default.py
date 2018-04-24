@@ -13,6 +13,7 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_RECORD_QUERIES = True
+    YB_IP = 'xx.xxx.xxx'
     # 导出文件目录
     SIGN_LOGS_CONTENS = basedir+'/file'
     # 百度AI第三方配置

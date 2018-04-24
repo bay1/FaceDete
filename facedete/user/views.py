@@ -12,7 +12,7 @@ from ..models import User, Signlog
 from flask import current_app, request, jsonify, send_from_directory
 
 
-@user.route('/sign', methods=['GET'])
+@user.route('/', methods=['GET'])
 def sign():
     return current_app.send_static_file('sign.html')
 
@@ -27,6 +27,9 @@ def checkSign():
     data = request.get_json(force=True)
     image = data['img']
     if image:
+        sign_ip = request.headers['X-Real-Ip']
+        if sign_ip[0:10] != current_app.config['YB_IP']:
+            return jsonify({"status": False, 'msg': "请连接易班网络再签到！"})
         client = current_app.config['CLIENT']
         image = base64.b64decode(image.split(',')[-1])
         groupId = current_app.config['GROUP_ID']
@@ -44,13 +47,13 @@ def checkSign():
             if user.signlogs and now_time-user.signlogs[-1].signtime < timedelta(hours=1):
                 return jsonify({"status": False, 'msg': "您签到太频繁了!!\n至少间隔一小时才能签到一次哦~"})
             add_log = Signlog(
-                ip=request.headers['X-Real-Ip']
+                ip=sign_ip
             )
             add_log.user_student_num = user.id
             db.session.add(add_log)
             return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~"})
         else:
-            return jsonify({"status": False, 'msg': "服务出错了！！"})
+            return jsonify({"status": False, 'msg': "签到失败！！！\n如果您已经注册,请尝试重新拍照"})
     else:
         return jsonify({"status": False, 'msg': "请求失败"})
 
@@ -114,6 +117,9 @@ def download():
     for user in users:
         if user.signlogs:
             for user_signlog in user.signlogs:
+                now_time = datetime.now()
+                if not now_time-user_signlog.signtime < timedelta(hours=20):
+                    continue
                 column = 0
                 table.write(row, column, user.student_num)
                 table.write(row, column+1, user.name)
