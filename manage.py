@@ -6,12 +6,15 @@
 import xlrd
 from facedete import create_app
 from facedete.extensions import db
+from flask_migrate import Migrate, MigrateCommand
 from facedete.models import User, Signlog
 from flask_script import Manager, Shell, Server
 
 app = create_app('default')
 
 manager = Manager(app)
+manager = Manager(app) #初始化flask-script
+migrate = Migrate(app, db)
 
 @manager.command
 def readexcel():
@@ -42,6 +45,8 @@ manager.add_command(
 manager.add_command(
     "runserver",
     Server(host='0.0.0.0'))
+
+manager.add_command('db', MigrateCommand)
 
 if __name__ == '__main__':
     manager.run()

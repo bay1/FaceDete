@@ -10,6 +10,7 @@ class User(db.Model):
     name = db.Column(db.String(20))
     group = db.Column(db.String(20))
     log_id = db.Column(db.String(20))
+    sign_statue = db.Column(db.Boolean, default=False)
     signlogs = db.relationship('Signlog', backref='user')
 
     def __repr__(self):

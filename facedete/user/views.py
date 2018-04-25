@@ -51,7 +51,12 @@ def checkSign():
             )
             add_log.user_student_num = user.id
             db.session.add(add_log)
-            return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~"})
+            if user.sign_statue and now_time-user.signlogs[-1].signtime < timedelta(days=1):
+                user.sign_statue = False
+                return jsonify({"status": True, 'msg': user.name+"\n您签出成功了~"})
+            elif not user.sign_statue:
+                user.sign_statue = True
+                return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~"})
         else:
             return jsonify({"status": False, 'msg': "签到失败！！！\n如果您已经注册,请尝试重新拍照"})
     else:
