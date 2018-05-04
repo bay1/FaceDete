@@ -44,7 +44,7 @@ def checkSign():
             if not user:
                 return jsonify({"status": False, 'msg': "未找到您的信息！！"})
             now_time = datetime.now()
-            if user.signlogs and now_time-user.signlogs[-1].signtime < timedelta(hours=1):
+            if user.signlogs and now_time - user.signlogs[-1].signtime < timedelta(hours=1):
                 return jsonify({"status": False, 'msg': "您签到太频繁了!!\n至少间隔一小时才能签到一次哦~"})
             add_log = Signlog(
                 ip=sign_ip
@@ -57,6 +57,9 @@ def checkSign():
             elif not user.sign_statue:
                 user.sign_statue = True
                 return jsonify({"status": True, 'msg': user.name+"\n您签到成功了~\n记得签出！！！！！！！！！"})
+            else:
+                user.sign_statue = True
+                return jsonify({"status": False, 'msg': user.name+"\n您上次值班没有签出~\n就先放过你，下次别忘了哦~\n签到成功~"})
         else:
             return jsonify({"status": False, 'msg': "签到失败！！！\n如果您已经注册,请尝试重新拍照"})
     else:
@@ -106,6 +109,13 @@ def checkReg():
 
 @user.route('/download', methods=['GET'])
 def download():
+    days = request.args.get("days")
+    if not days:
+        return "请填写所需天数~"
+    try:
+        days = int(days)
+    except BaseException as e:
+        return "填入的不是数字,你想干嘛~"
     users = User.query.all()
     row = 1
     data = xlwt.Workbook(encoding='utf-8')
@@ -123,7 +133,7 @@ def download():
         if user.signlogs:
             for user_signlog in user.signlogs:
                 now_time = datetime.now()
-                if not now_time-user_signlog.signtime < timedelta(hours=20):
+                if not now_time-user_signlog.signtime < timedelta(hours=20*int(days)):
                     continue
                 column = 0
                 table.write(row, column, user.student_num)
